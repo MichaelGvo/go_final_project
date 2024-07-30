@@ -8,24 +8,23 @@ import (
 
 func NextDateHandler(w http.ResponseWriter, r *http.Request) {
 	nowInString := r.URL.Query().Get("now")
-	if nowInString == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("now missing"))
-		return
-	}
+	//if nowInString == "" {
+	//	w.WriteHeader(http.StatusBadRequest)
+	//	w.Write([]byte("now missing"))
+	//	return
+	//}
 	date := r.URL.Query().Get("date")
-	if date == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("date missing"))
-		return
-	}
+	//if date == "" {
+	//	w.WriteHeader(http.StatusBadRequest)
+	//	w.Write([]byte("date missing"))
+	//	return
+	//}
 	repeat := r.URL.Query().Get("repeat")
-
-	if repeat == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("repeat missing"))
-		return
-	}
+	//if repeat == "" {
+	//	w.WriteHeader(http.StatusBadRequest)
+	//	w.Write([]byte("repeat missing"))
+	//	return
+	//}
 	now, err := time.Parse("20060102", nowInString)
 	if err != nil {
 		http.Error(w, "время не может быть преобразовано в корректную дату", http.StatusBadRequest)

@@ -53,15 +53,17 @@ func plusDay(now time.Time, startTime time.Time, repeat string) (string, error) 
 	days, err := strconv.Atoi(parts[1])
 	if err != nil {
 		fmt.Printf("failed to parse number: %v", err)
+
 	}
 	if days > 400 {
 		fmt.Printf("Current number is too much: %v", days)
+		return "", err
 	}
 	someDaysLater := startTime.AddDate(0, 0, days)
 	for someDaysLater.Before(now) {
 		someDaysLater = someDaysLater.AddDate(0, 0, days)
 	}
-	someDaysLaterStr := someDaysLater.Format("2006-01-02")
+	someDaysLaterStr := someDaysLater.Format("20060102")
 	return someDaysLaterStr, nil
 }
 func plusWeek(now time.Time, repeat string) (string, error) {
@@ -80,6 +82,9 @@ func plusWeek(now time.Time, repeat string) (string, error) {
 				break
 			}
 		}
+		if num > 7 {
+			return "", fmt.Errorf("invalid number of weekday")
+		}
 	}
 
 	var weekdays []time.Weekday
@@ -95,16 +100,29 @@ func plusWeek(now time.Time, repeat string) (string, error) {
 		return weekdays[i] < weekdays[j]
 	})
 
-	someDayOfWeek := now.AddDate(0, 0, int(now.Weekday()-weekdays[0]))
-	someDayOfWeekStr := someDayOfWeek.Format("2006-01-02")
+	var someDayOfWeek time.Time
+	switch {
+	case now.Weekday() > weekdays[0]:
+		someDayOfWeek = now.AddDate(0, 0, int(7-now.Weekday()+weekdays[0]))
+	case now.Weekday() < weekdays[0]:
+		someDayOfWeek = now.AddDate(0, 0, int(weekdays[0]-now.Weekday()))
+	}
+	//someDayOfWeek := now.AddDate(0, 0, int(7-now.Weekday()+weekdays[0]))
+	someDayOfWeekStr := someDayOfWeek.Format("20060102")
 	return someDayOfWeekStr, nil
 }
 
 func plusMonth(now time.Time, startTime time.Time, repeat string) (string, error) {
 	partsOfRepeat := strings.Split(repeat, " ")
 	allDays := partsOfRepeat[1]
-	allMonths := partsOfRepeat[2]
-
+	//allMonths := partsOfRepeat[2]
+	var allMonths string
+	switch {
+	case len(partsOfRepeat) == 3:
+		allMonths = partsOfRepeat[2]
+	case len(partsOfRepeat) == 2:
+		allMonths = "1,2,3,4,5,6,7,8,9,10,11,12"
+	}
 	monthsMap := make(map[int]bool)
 	if len(allMonths) != 0 {
 		for _, m := range strings.Split(allMonths, ",") {
@@ -137,7 +155,7 @@ func plusMonth(now time.Time, startTime time.Time, repeat string) (string, error
 		day := neededDate.Day()
 		month := int(neededDate.Month())
 
-		if daysMap[day] || daysMap[day-getDaysInMonth(neededDate.Year()-1, neededDate.Month())] {
+		if daysMap[day] || daysMap[day-daysInMonth(neededDate.Month(), neededDate.Year())-1] {
 
 			if monthsMap[month] {
 				if neededDate.After(now) {
@@ -147,10 +165,20 @@ func plusMonth(now time.Time, startTime time.Time, repeat string) (string, error
 		}
 	}
 }
+func daysInMonth(month time.Month, year int) int {
+	switch month {
+	case time.February:
+		if isCaseOfLeapYear(year) {
+			return 29
+		}
+		return 28
+	case time.April, time.June, time.September, time.November:
+		return 30
+	default:
+		return 31
+	}
+}
 
-func getDaysInMonth(year int, month time.Month) int {
-
-	date := time.Date(year, month+1, 0, 0, 0, 0, 0, time.UTC)
-
-	return date.Day()
+func isCaseOfLeapYear(year int) bool {
+	return year%4 == 0 && (year%100 != 0 || year%400 == 0)
 }

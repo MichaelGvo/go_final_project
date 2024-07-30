@@ -7,7 +7,7 @@ import (
 	handlers "go_final_project/handlers"
 )
 
-func Router() *mux.Router {
+func NewRouter() *mux.Router {
 	godotenv.Load(".env")
 	//port := os.Getenv("TODO_PORT")
 	r := mux.NewRouter()
