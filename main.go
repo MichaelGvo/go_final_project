@@ -5,14 +5,10 @@ import (
 	//	"encoding/json"
 
 	"go_final_project/db"
-	"go_final_project/router"
+	handlers "go_final_project/handlers"
+	"log"
 
-	//"go_final_project/router"
 	"net/http"
-	"os"
-
-	"github.com/joho/godotenv"
-	//	"github.com/go-chi/chi"
 )
 
 //type Task struct {
@@ -26,18 +22,46 @@ import (
 //var tasks = map[string]Task{}
 
 func main() {
-	godotenv.Load(".env")
-	port := os.Getenv("TODO_PORT")
-	r := router.NewRouter()
 
-	http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir("./web"))))
-	//http.Handle("/", http.FileServer(http.Dir("./web")))
-
+	mux := http.NewServeMux()
+	mux.Handle("/", http.FileServer(http.Dir("web/")))
+	mux.HandleFunc("/api/nextdate", handlers.NextDateHandler)
 	db.OpenCloseDb()
-
-	err := http.ListenAndServe(port, r)
+	err := http.ListenAndServe(":7540", mux)
 	if err != nil {
+		log.Printf("Error occurred: %v", err)
 		panic(err)
 	}
-
 }
+
+//godotenv.Load(".env")
+//port := ":7540"
+//mux := http.NewServeMux()
+
+//mux.HandleFunc("/api/task", auth(handlers.TaskHandle))
+//mux.HandleFunc("/api/nextdate", handlers.NextDateHandler)
+//http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir("./web"))))
+//mux.Handle("/", http.FileServer(http.Dir("web/")))
+//http.Handle("/", http.FileServer(http.Dir("./web")))
+
+//db.OpenCloseDb()
+
+//err := http.ListenAndServe(":7540", mux)
+//if err != nil {
+//	panic(err)
+////}
+
+//}
+
+//mux = http.NewServeMux()
+
+//mux.HandleFunc("/api/nextdate", handlers.NextDateHandle)
+//mux.HandleFunc("/api/task", auth(handlers.TaskHandle))
+//...
+//mux.Handle("/", http.FileServer(http.Dir("web/")))
+
+////strPort := defStrPort()
+//err := http.ListenAndServe(strPort, mux)
+//if err != nil {
+//	panic(err)
+//}

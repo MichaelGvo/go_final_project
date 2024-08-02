@@ -50,6 +50,9 @@ func plusYear(now time.Time, startTime time.Time) (string, error) {
 
 func plusDay(now time.Time, startTime time.Time, repeat string) (string, error) {
 	parts := strings.Split(repeat, " ")
+	if len(parts) != 2 {
+		return "", fmt.Errorf("we don't have gap in days")
+	}
 	days, err := strconv.Atoi(parts[1])
 	if err != nil {
 		fmt.Printf("failed to parse number: %v", err)
