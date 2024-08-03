@@ -4,7 +4,6 @@ import (
 	//	"bytes"
 	//	"encoding/json"
 
-	"go_final_project/db"
 	handlers "go_final_project/handlers"
 	"go_final_project/taskoperations"
 	"log"
@@ -20,15 +19,15 @@ import (
 //	Rule string            `json:"rule"`      // правило, по которому задачи будут повторяться
 //}
 
-//var tasks = map[string]Task{}
-
+// var tasks = map[string]Task{}
 func main() {
-
 	mux := http.NewServeMux()
 	mux.Handle("/", http.FileServer(http.Dir("web/")))
 	mux.HandleFunc("/api/nextdate", handlers.NextDateHandler)
-	mux.HandleFunc("/api/task", taskoperations.PostTaskHandler)
-	db.OpenCloseDb()
+	mux.HandleFunc("/api/task", func(w http.ResponseWriter, r *http.Request) {
+		taskoperations.PostTaskHandler(w, r)
+	})
+
 	err := http.ListenAndServe(":7540", mux)
 	if err != nil {
 		log.Printf("Error occurred: %v", err)

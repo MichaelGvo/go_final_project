@@ -19,8 +19,8 @@ type Task struct {
 	Repeat  string `json:"repeat"`  // правило, по которому задачи будут повторяться
 }
 
-func AddTask(date, title, comment, repeat string) (int64, error) {
-	res, err := db.Db.Exec("INSERT INTO scheduler (date, title, comment, repeat) VALUES (:date, :title, :comment, :repeat)",
+func AddTask(db *sql.DB, date, title, comment, repeat string) (int64, error) {
+	res, err := db.Exec("INSERT INTO scheduler (date, title, comment, repeat) VALUES (:date, :title, :comment, :repeat)",
 		sql.Named("date", date),
 		sql.Named("title", title),
 		sql.Named("comment", comment),
@@ -35,7 +35,9 @@ func AddTask(date, title, comment, repeat string) (int64, error) {
 	}
 	return id, err
 }
+
 func PostTaskHandler(w http.ResponseWriter, r *http.Request) {
+	db := db.GetDBInstance()
 
 	var task Task
 	// используем тип bytes.Buffer для работы с байтовыми данными, в данном случае с содержимым тела запроса (r.Body)
@@ -95,7 +97,7 @@ func PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 		task.Date = nextdate
 	}
 
-	id, err := AddTask(task.Date, task.Title, task.Comment, task.Repeat)
+	id, err := AddTask(db, task.Date, task.Title, task.Comment, task.Repeat)
 	if err != nil {
 		resp := map[string]string{"error": "Попытка добавить задачу не удалась"}
 		w.WriteHeader(http.StatusInternalServerError)
@@ -106,6 +108,5 @@ func PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(resp)
 		return
-
 	}
 }
