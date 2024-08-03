@@ -3,9 +3,7 @@ module go_final_project
 go 1.21.6
 
 require (
-	github.com/gorilla/mux v1.8.1
 	github.com/jmoiron/sqlx v1.4.0
-	github.com/joho/godotenv v1.5.1
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/stretchr/testify v1.9.0
 	modernc.org/sqlite v1.31.1

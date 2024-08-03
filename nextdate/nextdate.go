@@ -71,6 +71,10 @@ func plusDay(now time.Time, startTime time.Time, repeat string) (string, error) 
 }
 func plusWeek(now time.Time, repeat string) (string, error) {
 	partsOfRepeat := strings.Split(repeat, " ")
+	if len(partsOfRepeat) != 2 {
+		return "", fmt.Errorf("we don't have what day we need")
+	}
+
 	allDays := partsOfRepeat[1]
 	eachDaySeparated := strings.Split(allDays, ",")
 	uniqueElements := make(map[int]bool)
@@ -110,7 +114,7 @@ func plusWeek(now time.Time, repeat string) (string, error) {
 	case now.Weekday() < weekdays[0]:
 		someDayOfWeek = now.AddDate(0, 0, int(weekdays[0]-now.Weekday()))
 	}
-	//someDayOfWeek := now.AddDate(0, 0, int(7-now.Weekday()+weekdays[0]))
+
 	someDayOfWeekStr := someDayOfWeek.Format("20060102")
 	return someDayOfWeekStr, nil
 }

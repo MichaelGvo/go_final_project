@@ -6,6 +6,7 @@ import (
 
 	"go_final_project/db"
 	handlers "go_final_project/handlers"
+	"go_final_project/taskoperations"
 	"log"
 
 	"net/http"
@@ -26,6 +27,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("/", http.FileServer(http.Dir("web/")))
 	mux.HandleFunc("/api/nextdate", handlers.NextDateHandler)
+	mux.HandleFunc("/api/task", taskoperations.PostTaskHandler)
 	db.OpenCloseDb()
 	err := http.ListenAndServe(":7540", mux)
 	if err != nil {
