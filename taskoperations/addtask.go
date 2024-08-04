@@ -68,34 +68,63 @@ func PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = time.Parse("20060102", task.Date)
-	if err != nil {
-		resp := map[string]string{"error": "дата представлена в формате, отличном от 20060102"}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(resp)
-		return
-	}
+	//_, err = time.Parse("20060102", task.Date)
+	//if err != nil {
+	//	resp := map[string]string{"error": "дата представлена в формате, отличном от 20060102"}
+	//	w.WriteHeader(http.StatusBadRequest)
+	//	json.NewEncoder(w).Encode(resp)
+	//	return
+	//}
 	now := time.Now()
 	nowForm := now.Format("20060102")
-	switch {
-	case task.Date == "":
-		task.Date = nowForm
 
-	case task.Date == nowForm:
+	if task.Date == "" {
 		task.Date = nowForm
-
-	case task.Date < nowForm && task.Repeat == "":
-		task.Date = nowForm
-	case task.Date < nowForm && task.Repeat != "":
-		nextdate, err := finddate.NextDate(now, task.Date, task.Repeat)
+	} else {
+		parsedDate, err := time.Parse("20060102", task.Date)
 		if err != nil {
-			resp := map[string]string{"error": "правило повторения указано в неправильном формате"}
+			resp := map[string]string{"error": "Дата указана в неверном формате"}
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(resp)
 			return
 		}
-		task.Date = nextdate
+		if task.Date == nowForm {
+
+		} else if parsedDate.Before(now) {
+			if task.Repeat == "" {
+				task.Date = nowForm
+			} else {
+				nextDate, err := finddate.NextDate(now, task.Date, task.Repeat)
+				if err != nil {
+					resp := map[string]string{"error": err.Error()}
+					w.WriteHeader(http.StatusBadRequest)
+					json.NewEncoder(w).Encode(resp)
+					return
+				}
+				task.Date = nextDate
+			}
+		}
 	}
+
+	//switch {
+	//case task.Date == "":
+	//	task.Date = nowForm
+	//
+	//	case task.Date == nowForm:
+	//		task.Date = nowForm
+	//
+	//	case task.Date < nowForm && task.Repeat == "":
+	//		task.Date = nowForm
+	//	case task.Date < nowForm && task.Repeat != "":
+	//		nextdate, err := finddate.NextDate(now, task.Date, task.Repeat)
+	//		if err != nil {
+	//			resp := map[string]string{"error": "правило повторения указано в неправильном формате"}
+	//			w.WriteHeader(http.StatusBadRequest)
+	//			json.NewEncoder(w).Encode(resp)
+	//			return
+	//		}
+	//		task.Date = nextdate
+	//	}
 
 	id, err := AddTask(db, task.Date, task.Title, task.Comment, task.Repeat)
 	if err != nil {
