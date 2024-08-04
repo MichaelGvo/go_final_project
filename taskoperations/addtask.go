@@ -1,7 +1,6 @@
 package taskoperations
 
 import (
-	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -40,21 +39,8 @@ func PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 	db := db.GetDBInstance()
 
 	var task Task
-	// используем тип bytes.Buffer для работы с байтовыми данными, в данном случае с содержимым тела запроса (r.Body)
-	var buf bytes.Buffer
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	// err = nil - чтение прошло успешно
-	// err != nil - вызываем ошибку (http.Error) с кодом состояния http.StatusBadRequest (должен вернуть статус 400 Bad Request)
-	_, err := buf.ReadFrom(r.Body)
-	if err != nil {
-		resp := map[string]string{"error": "Чтение не прошло успешно"}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(resp)
-		return
-	}
-	// err = nil - успешно десериализуем JSON из буфера в структуру Task
-	// err != nil - вызываем ошибку (http.Error) с кодом состояния http.StatusBadRequest (должен вернуть статус 400 Bad Request)
-	if err = json.Unmarshal(buf.Bytes(), &task); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
 		resp := map[string]string{"error": "ошибка десериализации JSON"}
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(resp)
@@ -67,15 +53,8 @@ func PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(resp)
 		return
 	}
-
-	//_, err = time.Parse("20060102", task.Date)
-	//if err != nil {
-	//	resp := map[string]string{"error": "дата представлена в формате, отличном от 20060102"}
-	//	w.WriteHeader(http.StatusBadRequest)
-	//	json.NewEncoder(w).Encode(resp)
-	//	return
-	//}
 	now := time.Now()
+	//now = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 1, time.Local)
 	nowForm := now.Format("20060102")
 
 	if task.Date == "" {
@@ -89,7 +68,7 @@ func PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if task.Date == nowForm {
-
+			task.Date = nowForm
 		} else if parsedDate.Before(now) {
 			if task.Repeat == "" {
 				task.Date = nowForm
@@ -105,37 +84,27 @@ func PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-
-	//switch {
-	//case task.Date == "":
-	//	task.Date = nowForm
-	//
-	//	case task.Date == nowForm:
-	//		task.Date = nowForm
-	//
-	//	case task.Date < nowForm && task.Repeat == "":
-	//		task.Date = nowForm
-	//	case task.Date < nowForm && task.Repeat != "":
-	//		nextdate, err := finddate.NextDate(now, task.Date, task.Repeat)
-	//		if err != nil {
-	//			resp := map[string]string{"error": "правило повторения указано в неправильном формате"}
-	//			w.WriteHeader(http.StatusBadRequest)
-	//			json.NewEncoder(w).Encode(resp)
-	//			return
-	//		}
-	//		task.Date = nextdate
-	//	}
-
+	//fmt.Print(task.Date)
+	//fmt.Print(task.Title)
+	//fmt.Print(task.Comment)
+	//fmt.Print(task.Repeat)
 	id, err := AddTask(db, task.Date, task.Title, task.Comment, task.Repeat)
 	if err != nil {
 		resp := map[string]string{"error": "Попытка добавить задачу не удалась"}
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(resp)
 		return
-	} else {
-		resp := map[string]string{"id": fmt.Sprintf("%d", id)}
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(resp)
-		return
 	}
+	resp := map[string]string{"id": fmt.Sprintf("%d", id)}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(resp)
+
+	fmt.Print(task.Date)
+	fmt.Print(task.Title)
+	fmt.Print(task.Comment)
+	fmt.Print(task.Repeat)
+
+	fmt.Print(task.Date > now.Format("20060102"))
+	fmt.Print(task.Date == now.Format("20060102"))
+	fmt.Print(task.Date < now.Format("20060102"))
 }
