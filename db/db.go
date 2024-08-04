@@ -22,15 +22,14 @@ func GetDBInstance() *sql.DB {
 			panic(err)
 		}
 
-		var dbFile string
-		envdbFile := os.Getenv("TODO_DBFILE")
+		//envdbFile := os.Getenv("TODO_DBFILE")
 
-		switch {
-		case len(envdbFile) > 0:
-			dbFile = envdbFile
-		default:
-			dbFile = filepath.Join(filepath.Dir(appPath), "scheduler.db")
-		}
+		//switch {
+		//case len(envdbFile) > 0:
+		//	dbFile = envdbFile
+		//default:
+		dbFile := filepath.Join(filepath.Dir(appPath), "scheduler.db")
+		//}
 
 		_, err = os.Stat(dbFile)
 		var install bool
