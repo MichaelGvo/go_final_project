@@ -2,66 +2,55 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
+	"log"
 	"os"
 	"path/filepath"
-	"sync"
 
 	_ "modernc.org/sqlite"
 )
 
-var (
-	dbInstance *sql.DB
-	once       sync.Once
-)
+var Db *sql.DB
 
-// GetDBInstance возвращает единственный экземпляр соединения с базой данных
-func GetDBInstance() *sql.DB {
-	once.Do(func() {
-		appPath, err := os.Executable()
+func OpenCloseDb() (*sql.DB, error) {
+	appPath, err := os.Executable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	dbFile := filepath.Join(filepath.Dir(appPath), "scheduler.db")
+	_, err = os.Stat(dbFile)
+
+	var install bool
+	if err != nil {
+		install = true
+	}
+
+	Db, err := sql.Open("sqlite", "scheduler.db")
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	if install {
+		createTable := `CREATE TABLE IF NOT EXISTS scheduler (
+		    id INTEGER PRIMARY KEY AUTOINCREMENT,
+			date    CHAR(8) NOT NULL DEFAULT "",
+			title   VARCHAR(128) NOT NULL DEFAULT "",
+			comment TEXT NOT NULL DEFAULT "",
+			repeat  VARCHAR(128) NOT NULL DEFAULT ""
+		);`
+		_, err = Db.Exec(createTable)
 		if err != nil {
-			panic(err)
+			fmt.Println(err)
+			return nil, err
 		}
-
-		//envdbFile := os.Getenv("TODO_DBFILE")
-
-		//switch {
-		//case len(envdbFile) > 0:
-		//	dbFile = envdbFile
-		//default:
-		dbFile := filepath.Join(filepath.Dir(appPath), "scheduler.db")
-		//}
-
-		_, err = os.Stat(dbFile)
-		var install bool
+		createIndex := "CREATE INDEX IF NOT EXISTS scheduler_date ON scheduler (date)"
+		_, err = Db.Exec(createIndex)
 		if err != nil {
-			install = true
+			fmt.Println(err)
+			return nil, err
 		}
-
-		db, err := sql.Open("sqlite", dbFile)
-		if err != nil {
-			panic(err)
-		}
-
-		if install {
-			createTable := `CREATE TABLE IF NOT EXISTS scheduler (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                date    TEXT NOT NULL CHECK(length(date) = 8),
-                title   TEXT NOT NULL,
-                comment TEXT,
-                repeat TEXT CHECK(length(repeat) <= 128)
-            );`
-			_, err = db.Exec(createTable)
-			if err != nil {
-				panic(err)
-			}
-			createIndex := "CREATE INDEX IF NOT EXISTS scheduler_date ON scheduler (date)"
-			_, err = db.Exec(createIndex)
-			if err != nil {
-				panic(err)
-			}
-		}
-
-		dbInstance = db
-	})
-	return dbInstance
+	}
+	return Db, nil
 }

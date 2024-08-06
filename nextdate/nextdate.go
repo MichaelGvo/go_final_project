@@ -34,7 +34,7 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 	case 'm':
 		return plusMonth(now, startTime, repeat)
 	default:
-		return "", fmt.Errorf("invalid repeat format: %s", repeat)
+		return "", fmt.Errorf(`{"error":"invalid repeat format"}`)
 	}
 }
 
@@ -51,7 +51,7 @@ func plusYear(now time.Time, startTime time.Time) (string, error) {
 func plusDay(now time.Time, startTime time.Time, repeat string) (string, error) {
 	parts := strings.Split(repeat, " ")
 	if len(parts) != 2 {
-		return "", fmt.Errorf("we don't have gap in days")
+		return "", fmt.Errorf(`{"error":"we don't have gap in days"}`)
 	}
 	days, err := strconv.Atoi(parts[1])
 	if err != nil {
@@ -72,7 +72,7 @@ func plusDay(now time.Time, startTime time.Time, repeat string) (string, error) 
 func plusWeek(now time.Time, repeat string) (string, error) {
 	partsOfRepeat := strings.Split(repeat, " ")
 	if len(partsOfRepeat) != 2 {
-		return "", fmt.Errorf("we don't have what day we need")
+		return "", fmt.Errorf(`{"error":"we don't have what day we need"}`)
 	}
 
 	allDays := partsOfRepeat[1]
@@ -113,6 +113,8 @@ func plusWeek(now time.Time, repeat string) (string, error) {
 		someDayOfWeek = now.AddDate(0, 0, int(7-now.Weekday()+weekdays[0]))
 	case now.Weekday() < weekdays[0]:
 		someDayOfWeek = now.AddDate(0, 0, int(weekdays[0]-now.Weekday()))
+	case now.Weekday() == weekdays[0] && len(weekdays) > 1:
+		someDayOfWeek = now.AddDate(0, 0, int(weekdays[1]-now.Weekday()))
 	}
 
 	someDayOfWeekStr := someDayOfWeek.Format("20060102")
