@@ -21,8 +21,7 @@ func main() {
 	mux.HandleFunc("/api/nextdate", handlers.NextDateHandler)
 	mux.HandleFunc("/api/task", taskoperations.WorkWithTaskHandler)
 	mux.HandleFunc("/api/tasks", taskoperations.WorkWithTasksHandler(db))
-	mux.HandleFunc("/api/task?id=", taskoperations.WorkWithTaskHandler)
-	mux.HandleFunc("/api/task/done?id=", taskoperations.TaskDoneHandler)
+	mux.HandleFunc("/api/task/done", taskoperations.TaskDoneHandler)
 
 	err = http.ListenAndServe(":7540", mux)
 	if err != nil {
