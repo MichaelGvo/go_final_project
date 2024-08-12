@@ -39,11 +39,14 @@ func TaskDoneHandler(w http.ResponseWriter, req *http.Request) {
 
 	if err != nil {
 		if err == sql.ErrNoRows {
+			w.Header().Set("Content-Type", "application/json")
 			log.Println("Не удается обнаружить задачу")
-			http.Error(w, "{\"error\":\"Не удается обнаружить задачу\"}", http.StatusNotFound)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Не удается обнаружить задачу"})
 		} else {
+			w.Header().Set("Content-Type", "application/json")
 			log.Printf("Ошибка при сканировании задачи: %v", err)
-			http.Error(w, "{\"error\":\"Ошибка при сканировании задачи: "+err.Error()+"\"}", http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Ошибка при сканировании задачи"})
+			//http.Error(w, "{\"error\":\"Ошибка при сканировании задачи: "+err.Error()+"\"}", http.StatusInternalServerError)
 		}
 		return
 	}
@@ -52,10 +55,11 @@ func TaskDoneHandler(w http.ResponseWriter, req *http.Request) {
 		_, ResponseStatus, err := DeleteTask(db, id)
 		if err != nil {
 			log.Printf("Ошибка удаления задачи: %v", err)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Ошибка при сканировании задачи"})
 			http.Error(w, "{\"error\":\"Ошибка удаления задачи: "+err.Error()+"\"}", ResponseStatus)
 			return
 		}
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte{})
 		return
@@ -101,7 +105,7 @@ func TaskDoneHandler(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte{})
 	}
