@@ -46,7 +46,7 @@ func TaskDoneHandler(w http.ResponseWriter, req *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			log.Printf("Ошибка при сканировании задачи: %v", err)
 			json.NewEncoder(w).Encode(map[string]string{"error": "Ошибка при сканировании задачи"})
-			//http.Error(w, "{\"error\":\"Ошибка при сканировании задачи: "+err.Error()+"\"}", http.StatusInternalServerError)
+
 		}
 		return
 	}
@@ -61,7 +61,8 @@ func TaskDoneHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte{})
+		json.NewEncoder(w).Encode(map[string]string{})
+
 		return
 	} else {
 		now := time.Now()
@@ -107,6 +108,7 @@ func TaskDoneHandler(w http.ResponseWriter, req *http.Request) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte{})
+		json.NewEncoder(w).Encode(map[string]string{})
+
 	}
 }

@@ -2,7 +2,6 @@ package taskoperations
 
 import (
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -32,12 +31,6 @@ func DeleteTask(db *sql.DB, id string) ([]byte, int, error) {
 		log.Println("Ошибка: не удается найти задачу")
 		return nil, 400, errors.New(`{"error":"Не удается найти задачу"}`)
 	}
-	var empty Task
-	response, err := json.Marshal(empty)
-	if err != nil {
-		log.Printf("Ошибка при маршализации пустого ответа: %v", err)
-		return []byte{}, 400, err
-	}
 
-	return response, 200, nil
+	return []byte("{}"), 200, nil
 }
