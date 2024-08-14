@@ -10,8 +10,6 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-var Db *sql.DB
-
 func OpenCloseDb() (*sql.DB, error) {
 	appPath, err := os.Executable()
 	if err != nil {
@@ -26,7 +24,7 @@ func OpenCloseDb() (*sql.DB, error) {
 		install = true
 	}
 
-	Db, err := sql.Open("sqlite", "scheduler.db")
+	db, err := sql.Open("sqlite", "scheduler.db")
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
@@ -40,17 +38,17 @@ func OpenCloseDb() (*sql.DB, error) {
 			comment TEXT NOT NULL DEFAULT "",
 			repeat  VARCHAR(128) NOT NULL DEFAULT ""
 		);`
-		_, err = Db.Exec(createTable)
+		_, err = db.Exec(createTable)
 		if err != nil {
 			fmt.Println(err)
 			return nil, err
 		}
 		createIndex := "CREATE INDEX IF NOT EXISTS scheduler_date ON scheduler (date)"
-		_, err = Db.Exec(createIndex)
+		_, err = db.Exec(createIndex)
 		if err != nil {
 			fmt.Println(err)
 			return nil, err
 		}
 	}
-	return Db, nil
+	return db, nil
 }

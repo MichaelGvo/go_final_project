@@ -15,14 +15,14 @@ func init() {
 	log.SetOutput(os.Stdout)
 }
 
-func UpdateTask(db *sql.DB, req *http.Request) ([]byte, int, error) {
+func (tr *TaskRepo) UpdateTask(req *http.Request) ([]byte, int, error) {
 	task, ResponseStatus, err := Check(req)
 	if err != nil {
 		log.Printf("Ошибка при проверке задачи: %v", err)
 		return []byte{}, ResponseStatus, err
 	}
 
-	res, err := db.Exec(`UPDATE scheduler SET date = :date, title = :title, comment = :comment, repeat = :repeat
+	res, err := tr.DB.Exec(`UPDATE scheduler SET date = :date, title = :title, comment = :comment, repeat = :repeat
   WHERE id = :id`,
 		sql.Named("date", task.Date),
 		sql.Named("title", task.Title),

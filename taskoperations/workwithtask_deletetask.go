@@ -14,8 +14,8 @@ func init() {
 	log.SetOutput(os.Stdout)
 }
 
-func DeleteTask(db *sql.DB, id string) ([]byte, int, error) {
-	task, err := db.Exec("DELETE FROM scheduler WHERE id = :id", sql.Named("id", id))
+func (tr *TaskRepo) DeleteTask(id string) ([]byte, int, error) {
+	task, err := tr.DB.Exec("DELETE FROM scheduler WHERE id = :id", sql.Named("id", id))
 	if err != nil {
 		log.Printf("Ошибка при удалении задачи из базы данных: %v", err)
 		return nil, 500, fmt.Errorf(`{"error":"%s"}`, err)

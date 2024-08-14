@@ -2,6 +2,7 @@ package nextdate
 
 import (
 	"go_final_project/nextdate"
+	"log"
 	"net/http"
 	"time"
 )
@@ -23,5 +24,10 @@ func NextDateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(nextDate))
+	_, err = w.Write([]byte(nextDate))
+	if err != nil {
+		log.Printf("Ошибка при записи ответа в NextDateHandler: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }

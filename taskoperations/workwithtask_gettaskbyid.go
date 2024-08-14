@@ -15,10 +15,10 @@ func init() {
 	log.SetOutput(os.Stdout)
 }
 
-func GetTaskById(db *sql.DB, id string) ([]byte, int, error) {
+func (tr *TaskRepo) GetTaskById(id string) ([]byte, int, error) {
 	var t Task
 
-	row := db.QueryRow("SELECT id, date, title, comment, repeat FROM scheduler WHERE id = :id", sql.Named("id", id))
+	row := tr.DB.QueryRow("SELECT id, date, title, comment, repeat FROM scheduler WHERE id = :id", sql.Named("id", id))
 	err := row.Scan(&t.ID, &t.Date, &t.Title, &t.Comment, &t.Repeat)
 	if err != nil {
 		if err == sql.ErrNoRows {

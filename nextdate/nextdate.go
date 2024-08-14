@@ -9,17 +9,12 @@ import (
 	"time"
 )
 
-func parseTime(s string) (time.Time, error) {
-	t, err := time.Parse("20060102", s)
-	return t, err
-}
-
 func NextDate(now time.Time, date string, repeat string) (string, error) {
 	if repeat == "" {
 		return "", errors.New("null in repeat")
 	}
 
-	startTime, err := parseTime(date)
+	startTime, err := time.Parse("20060102", date)
 	if err != nil {
 		return "", fmt.Errorf("incorrect date: %w", err)
 	}

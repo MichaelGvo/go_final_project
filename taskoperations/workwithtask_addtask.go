@@ -22,7 +22,7 @@ type Id struct {
 	Id int64 `json:"id"`
 }
 
-func AddTask(db *sql.DB, req *http.Request) ([]byte, int, error) {
+func (tr *TaskRepo) AddTask(req *http.Request) ([]byte, int, error) {
 	var idResp Id
 
 	task, ResponseStatus, err := Check(req)
@@ -31,7 +31,7 @@ func AddTask(db *sql.DB, req *http.Request) ([]byte, int, error) {
 		return []byte{}, ResponseStatus, err
 	}
 
-	result, err := db.Exec(`INSERT INTO scheduler (date, title, comment, repeat)
+	result, err := tr.DB.Exec(`INSERT INTO scheduler (date, title, comment, repeat)
   VALUES (:date, :title, :comment, :repeat)`,
 		sql.Named("date", task.Date),
 		sql.Named("title", task.Title),
