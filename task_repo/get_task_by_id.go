@@ -29,9 +29,3 @@ func (tr *TaskRepo) GetTaskByID(id string) (Task, error) {
 
 	return t, nil
 }
-
-//result, err := json.Marshal(t)
-//if err != nil {
-//	log.Printf("Ошибка при маршализации задачи: %v", err)
-//	return nil, http.StatusInternalServerError, errors.New(`{"error":"Ошибка при маршализации задачи"}`)
-//}

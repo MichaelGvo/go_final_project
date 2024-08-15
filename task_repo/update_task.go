@@ -40,16 +40,3 @@ func (tr *TaskRepo) UpdateTask(task Task) error {
 
 	return nil
 }
-
-//task, ResponseStatus, err := Check(req)
-//if err != nil {
-//	log.Printf("Ошибка при проверке задачи: %v", err)
-//	return []byte{}, ResponseStatus, err
-//}
-
-//var empty Task
-//response, err := json.Marshal(empty)
-//if err != nil {
-//	log.Printf("Ошибка при маршализации пустого ответа: %v", err)
-//	return []byte{}, 400, err
-//}

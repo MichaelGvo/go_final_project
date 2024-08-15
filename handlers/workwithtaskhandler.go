@@ -1,12 +1,16 @@
 package handlers
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
+	"errors"
+	"go_final_project/nextdate"
 	"go_final_project/task_repo"
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 func init() {
@@ -15,138 +19,159 @@ func init() {
 	log.SetOutput(os.Stdout)
 }
 
-var empty = task_repo.Task{
-	ID:      "",
-	Date:    "",
-	Title:   "",
-	Comment: "",
-	Repeat:  "",
+type IDTaskResponse struct {
+	ID int64 `json:"id"`
 }
 
-type IDTask struct {
-	Id int64 `json:"id"`
+type ErrorResponse struct {
+	Error string `json:"error"`
 }
 
 func WorkWithTaskHandler(db *task_repo.TaskRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-
-		param := req.URL.Query().Get("id")
-		var response []byte
-		var err error
-		var RespStatus int
-
 		switch req.Method {
 		case http.MethodGet:
-			if param == "" {
-				log.Println("Ошибка: некорректный идентификатор")
-				http.Error(w, `{"error":"incorrect id"}`, http.StatusBadRequest)
-				return
-			}
-			task, err := db.GetTaskByID(param)
-			if err != nil {
-				if err == sql.ErrNoRows {
-					log.Printf("Ошибка при получении задачи: %v", err)
-					http.Error(w, `{"error":"task not found"}`, ResponseStatus)
-					return
-				}
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			response, err = json.Marshal(task)
-			if err != nil {
-				log.Printf("Ошибка при маршализации задачи: %v", err)
-				http.Error(w, `{"error":"Ошибка при маршализации задачи"}`, http.StatusInternalServerError)
-				return
-			}
-			RespStatus = http.StatusOK
-
+			handleGetTask(w, req, db)
 		case http.MethodPost:
-			var idtask IDTask
-			task, RespStatus, err := task_repo.Check(req)
-			if err != nil {
-				log.Printf("Ошибка при проверке задачи: %v", err)
-				http.Error(w, err.Error(), RespStatus)
-				return
-			}
-
-			idtask.Id, err = db.AddTask(task)
-			if err != nil {
-				log.Printf("Ошибка при добавлении задачи: %v", err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			response, err = json.Marshal(idtask)
-			if err != nil {
-				log.Printf("Ошибка при маршализации идентификатора: %v", err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			RespStatus = http.StatusOK
-
+			handleCreateTask(w, req, db)
 		case http.MethodPut:
-			task, RespStatus, err := task_repo.Check(req)
-			if err != nil {
-				log.Printf("Ошибка при проверке задачи: %v", err)
-				http.Error(w, err.Error(), RespStatus)
-				return
-			}
-
-			err = db.UpdateTask(task)
-			if err != nil {
-				if err.Error() == `{"error":"Задача не найдена"}` {
-					log.Printf("Ошибка при обновлении задачи - задача не найдена: %v", err)
-					http.Error(w, err.Error(), http.StatusNotFound)
-				}
-				log.Printf("Ошибка при обновлении задачи: %v", err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			response, err = json.Marshal(empty)
-			if err != nil {
-				log.Printf("Ошибка при маршализации пустого ответа: %v", err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			RespStatus = http.StatusOK
-
+			handleUpdateTask(w, req, db)
 		case http.MethodDelete:
-			if param == "" {
-				log.Println("Ошибка: некорректный идентификатор")
-				http.Error(w, `{"error":"incorrect id"}`, http.StatusBadRequest)
-				return
-			}
-			err := db.DeleteTask(param)
-			if err != nil {
-				if err.Error() == `{"error":"not found the task"}` {
-					log.Println("Ошибка: не удается найти задачу - методы delete")
-					http.Error(w, err.Error(), http.StatusNotFound)
-					return
-				}
-				log.Printf("Ошибка при удалении задачи: %v", err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			accept := map[string]interface{}{}
-			response, err = json.Marshal(accept)
-			if err != nil {
-				log.Printf("Ошибка при маршализации пустого ответа: %v", err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			RespStatus = http.StatusOK
-
+			handleDeleteTask(w, req, db)
 		default:
-			log.Println("Ошибка: метод не разрешен")
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(RespStatus)
-		_, err = w.Write(response)
-		if err != nil {
-			log.Printf("Ошибка при записи ответа в http.MethodGet: %v", err)
+			sendErrorResponse(w, "Unsupported method", http.StatusMethodNotAllowed)
 		}
 	}
+}
+
+func handleGetTask(w http.ResponseWriter, req *http.Request, tr *task_repo.TaskRepo) {
+	id := req.URL.Query().Get("id")
+	if id == "" {
+		sendErrorResponse(w, "Некорректный идентификатор", http.StatusBadRequest)
+		return
+	}
+	task, err := tr.GetTaskByID(id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			sendErrorResponse(w, "Задача не найдена", http.StatusNotFound)
+			return
+		}
+		sendErrorResponse(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	sendJSONResponse(w, task, http.StatusOK)
+}
+
+func handleCreateTask(w http.ResponseWriter, req *http.Request, tr *task_repo.TaskRepo) {
+	task, respStatus, err := Check(req)
+	if err != nil {
+		sendErrorResponse(w, err.Error(), respStatus)
+		return
+	}
+	id, err := tr.AddTask(task)
+	if err != nil {
+		sendErrorResponse(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	sendJSONResponse(w, IDTaskResponse{ID: id}, http.StatusCreated)
+}
+
+func handleUpdateTask(w http.ResponseWriter, req *http.Request, tr *task_repo.TaskRepo) {
+	task, respStatus, err := Check(req)
+	if err != nil {
+		sendErrorResponse(w, err.Error(), respStatus)
+		return
+	}
+	if err := tr.UpdateTask(task); err != nil {
+		if err == sql.ErrNoRows {
+			sendErrorResponse(w, "Задача не найдена", http.StatusNotFound)
+		} else {
+			sendErrorResponse(w, err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+	sendJSONResponse(w, struct{}{}, http.StatusOK)
+}
+
+func handleDeleteTask(w http.ResponseWriter, req *http.Request, tr *task_repo.TaskRepo) {
+	id := req.URL.Query().Get("id")
+	if id == "" {
+		sendErrorResponse(w, "Некорректный идентификатор", http.StatusBadRequest)
+		return
+	}
+	if err := tr.DeleteTask(id); err != nil {
+		if err == sql.ErrNoRows {
+			sendErrorResponse(w, "Задача не найдена", http.StatusNotFound)
+		} else {
+			sendErrorResponse(w, err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+	sendJSONResponse(w, struct{}{}, http.StatusOK)
+}
+
+func sendJSONResponse(w http.ResponseWriter, data interface{}, statusCode int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(data)
+}
+
+func sendErrorResponse(w http.ResponseWriter, errorMsg string, statusCode int) {
+	sendJSONResponse(w, ErrorResponse{Error: errorMsg}, statusCode)
+}
+
+func Check(req *http.Request) (task_repo.Task, int, error) {
+	var task task_repo.Task
+	var buf bytes.Buffer
+
+	_, err := buf.ReadFrom(req.Body)
+	if err != nil {
+		log.Printf("Ошибка при чтении тела запроса: %v", err)
+		return task, http.StatusInternalServerError, err
+	}
+
+	if err = json.Unmarshal(buf.Bytes(), &task); err != nil {
+		log.Printf("Ошибка при разборе JSON-данных: %v", err)
+		return task, http.StatusInternalServerError, err
+	}
+
+	if task.Title == "" {
+		log.Println("Ошибка: не указано название задачи")
+		return task, http.StatusBadRequest, errors.New(`{"error":"task title is not specified"}`)
+	}
+
+	now := time.Now()
+	now = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+
+	if task.Date == "" {
+		task.Date = now.Format("20060102")
+	}
+
+	dateParse, err := time.Parse("20060102", task.Date)
+	if err != nil {
+		log.Printf("Ошибка при преобразовании даты: %v", err)
+		return task, http.StatusBadRequest, errors.New(`{"error":"incorrect date"}`)
+	}
+	var dateNew string
+	if task.Repeat != "" {
+		dateNew, err = nextdate.NextDate(now, task.Date, task.Repeat)
+		if err != nil {
+			log.Printf("Ошибка при получении следующей даты: %v", err)
+			return task, http.StatusBadRequest, err
+		}
+	}
+
+	if task.Date == now.Format("20060102") {
+		task.Date = now.Format("20060102")
+	}
+
+	if dateParse.Before(now) {
+		if task.Repeat == "" {
+			task.Date = now.Format("20060102")
+		} else {
+			task.Date = dateNew
+		}
+	}
+
+	return task, http.StatusOK, nil
 }

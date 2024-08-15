@@ -63,11 +63,3 @@ func WorkWithTasksHandler(tr *task_repo.TaskRepo) http.HandlerFunc {
 		w.Write(response)
 	}
 }
-
-//response, err := json.Marshal(map[string][]Task{"tasks": tasks})
-//if err != nil {
-//	log.Printf("Ошибка при маршализации ответа: %v", err)
-//	return nil, http.StatusInternalServerError, err
-//}
-
-//return response, http.StatusOK, nil

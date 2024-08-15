@@ -32,5 +32,5 @@ func (tr *TaskRepo) DeleteTask(id string) error {
 		return errors.New(`{"error":"Не удается найти задачу"}`)
 	}
 	return nil
-	//return []byte("{}"), 200, nil
+
 }
