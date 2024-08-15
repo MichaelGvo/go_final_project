@@ -1,4 +1,4 @@
-package taskoperations
+package task_repo
 
 import (
 	"bytes"
@@ -14,7 +14,7 @@ import (
 
 func init() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-	log.SetPrefix("[TaskOperations/addtask] ")
+	log.SetPrefix("[task_repo/AddTask] ")
 	log.SetOutput(os.Stdout)
 }
 
@@ -22,14 +22,8 @@ type Id struct {
 	Id int64 `json:"id"`
 }
 
-func (tr *TaskRepo) AddTask(req *http.Request) ([]byte, int, error) {
-	var idResp Id
-
-	task, ResponseStatus, err := Check(req)
-	if err != nil {
-		log.Printf("Ошибка при проверке задачи: %v", err)
-		return []byte{}, ResponseStatus, err
-	}
+func (tr *TaskRepo) AddTask(task Task) (int64, error) {
+	var id int64
 
 	result, err := tr.DB.Exec(`INSERT INTO scheduler (date, title, comment, repeat)
   VALUES (:date, :title, :comment, :repeat)`,
@@ -40,22 +34,15 @@ func (tr *TaskRepo) AddTask(req *http.Request) ([]byte, int, error) {
 	)
 	if err != nil {
 		log.Printf("Ошибка при добавлении задачи в базу данных: %v", err)
-		return []byte{}, 500, err
+		return id, err
 	}
-	id, err := result.LastInsertId()
+	id, err = result.LastInsertId()
 	if err != nil {
 		log.Printf("Ошибка при получении идентификатора новой задачи: %v", err)
-		return []byte{}, 500, err
+		return id, err
 	}
 
-	idResp.Id = id
-
-	idResult, err := json.Marshal(idResp)
-	if err != nil {
-		log.Printf("Ошибка при маршализации идентификатора: %v", err)
-		return []byte{}, 500, err
-	}
-	return idResult, 200, nil
+	return id, nil
 }
 
 func Check(req *http.Request) (Task, int, error) {

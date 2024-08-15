@@ -1,4 +1,4 @@
-package taskoperations
+package task_repo
 
 type Task struct {
 	ID      string `json:"id"`      // id задачи

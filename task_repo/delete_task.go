@@ -1,4 +1,4 @@
-package taskoperations
+package task_repo
 
 import (
 	"database/sql"
@@ -10,27 +10,27 @@ import (
 
 func init() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-	log.SetPrefix("[TaskOperations/deletetask] ")
+	log.SetPrefix("[task_repo/DeleteTask] ")
 	log.SetOutput(os.Stdout)
 }
 
-func (tr *TaskRepo) DeleteTask(id string) ([]byte, int, error) {
+func (tr *TaskRepo) DeleteTask(id string) error {
 	task, err := tr.DB.Exec("DELETE FROM scheduler WHERE id = :id", sql.Named("id", id))
 	if err != nil {
 		log.Printf("Ошибка при удалении задачи из базы данных: %v", err)
-		return nil, 500, fmt.Errorf(`{"error":"%s"}`, err)
+		return fmt.Errorf(`{"error":"%s"}`, err)
 	}
 
 	rowsAffected, err := task.RowsAffected()
 	if err != nil {
 		log.Printf("Ошибка при получении количества удаленных строк: %v", err)
-		return nil, 500, err
+		return fmt.Errorf(`{"error":"%s"}`, err)
 	}
 
 	if rowsAffected == 0 {
 		log.Println("Ошибка: не удается найти задачу")
-		return nil, 400, errors.New(`{"error":"Не удается найти задачу"}`)
+		return errors.New(`{"error":"Не удается найти задачу"}`)
 	}
-
-	return []byte("{}"), 200, nil
+	return nil
+	//return []byte("{}"), 200, nil
 }

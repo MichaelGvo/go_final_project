@@ -1,11 +1,10 @@
-package taskoperations
+package handlers
 
 import (
-	"bytes"
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"go_final_project/nextdate"
+	"go_final_project/task_repo"
 	"log"
 	"net/http"
 	"os"
@@ -14,11 +13,13 @@ import (
 
 func init() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-	log.SetPrefix("[TaskDoneHandler] ")
+	log.SetPrefix("[Handlers/TaskDoneHandler] ")
 	log.SetOutput(os.Stdout)
 }
 
-func TaskDoneHandler(db *TaskRepo) http.HandlerFunc {
+var ResponseStatus int
+
+func TaskDoneHandler(db *task_repo.TaskRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		id := req.URL.Query().Get("id")
 		if id == "" {
@@ -42,7 +43,8 @@ func TaskDoneHandler(db *TaskRepo) http.HandlerFunc {
 		}
 
 		if taskDone.Repeat == "" {
-			_, ResponseStatus, err := db.DeleteTask(id)
+			//_, ResponseStatus, err := db.DeleteTask(id)
+			err := db.DeleteTask(id)
 			if err != nil {
 				log.Printf("Ошибка удаления задачи: %v", err)
 				json.NewEncoder(w).Encode(map[string]string{"error": "Ошибка при сканировании задачи"})
@@ -72,24 +74,25 @@ func TaskDoneHandler(db *TaskRepo) http.HandlerFunc {
 
 			taskDone.Date = nextDate.Format("20060102")
 
-			taskJson, err := json.Marshal(taskDone)
-			if err != nil {
-				log.Printf("Ошибка преобразования задачи: %v", err)
-				http.Error(w, "{\"error\":\"Ошибка преобразования задачи: "+err.Error()+"\"}", http.StatusInternalServerError)
-				return
-			}
-			newRequest, err := http.NewRequest(http.MethodPut, "", bytes.NewBuffer(taskJson))
-			if err != nil {
-				log.Printf("Ошибка при создании нового запроса: %v", err)
-				http.Error(w, "{\"error\":\"Ошибка при создании нового запроса: "+err.Error()+"\"}", http.StatusInternalServerError)
-				return
-			}
-			newRequest.Header.Set("Content-Type", "application/json")
-
-			q := newRequest.URL.Query()
-			q.Add("id", id)
-			newRequest.URL.RawQuery = q.Encode()
-			_, ResponseStatus, err = db.UpdateTask(newRequest)
+			//			taskJson, err := json.Marshal(taskDone)
+			//			if err != nil {
+			//				log.Printf("Ошибка преобразования задачи: %v", err)
+			//				http.Error(w, "{\"error\":\"Ошибка преобразования задачи: "+err.Error()+"\"}", http.StatusInternalServerError)
+			//				return
+			//			}
+			//			newRequest, err := http.NewRequest(http.MethodPut, "", bytes.NewBuffer(taskJson))
+			//			if err != nil {
+			//				log.Printf("Ошибка при создании нового запроса: %v", err)
+			//				http.Error(w, "{\"error\":\"Ошибка при создании нового запроса: "+err.Error()+"\"}", http.StatusInternalServerError)
+			//				return
+			//			}
+			//			newRequest.Header.Set("Content-Type", "application/json")
+			//
+			//			q := newRequest.URL.Query()
+			//			q.Add("id", id)
+			//			newRequest.URL.RawQuery = q.Encode()
+			//			_, ResponseStatus, err = db.UpdateTask(newRequest)
+			err = db.UpdateTask(taskDone)
 			if err != nil {
 				log.Printf("Ошибка при обновлении задачи: %v", err)
 				http.Error(w, "{\"error\":\"Ошибка при обновлении задачи: "+err.Error()+"\"}", ResponseStatus)
@@ -102,24 +105,4 @@ func TaskDoneHandler(db *TaskRepo) http.HandlerFunc {
 
 		}
 	}
-}
-func (tr *TaskRepo) TaskDone(id string) (Task, error) {
-	var taskDone Task
-	row := tr.DB.QueryRow("SELECT id, date, title, comment, repeat FROM scheduler WHERE id = :id", sql.Named("id", id))
-	err := row.Scan(&taskDone.ID, &taskDone.Date, &taskDone.Title, &taskDone.Comment, &taskDone.Repeat)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			log.Println("Не удается обнаружить задачу")
-			return taskDone, errors.New(`{"error":"not find the task"}`)
-		} else {
-			log.Printf("Ошибка при сканировании задачи: %v", err)
-			return taskDone, err
-		}
-	}
-
-	if err := row.Err(); err != nil {
-		return taskDone, err
-	}
-
-	return taskDone, nil
 }

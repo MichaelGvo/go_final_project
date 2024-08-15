@@ -1,4 +1,4 @@
-package taskoperations
+package task_repo
 
 import "database/sql"
 

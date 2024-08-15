@@ -1,4 +1,4 @@
-package nextdate
+package handlers
 
 import (
 	"go_final_project/nextdate"

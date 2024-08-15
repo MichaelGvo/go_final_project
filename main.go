@@ -2,8 +2,8 @@ package main
 
 import (
 	"go_final_project/db"
-	handlers "go_final_project/handlers"
-	"go_final_project/taskoperations"
+	"go_final_project/handlers"
+	"go_final_project/task_repo"
 	"log"
 
 	"net/http"
@@ -15,14 +15,14 @@ func main() {
 		log.Fatalf("Ошибка при создании базы: %v", err)
 	}
 	defer db.Close()
-	tr := &taskoperations.TaskRepo{DB: db}
+	tr := &task_repo.TaskRepo{DB: db}
 
 	mux := http.NewServeMux()
 	mux.Handle("/", http.FileServer(http.Dir("web/")))
 	mux.HandleFunc("/api/nextdate", handlers.NextDateHandler)
-	mux.HandleFunc("/api/task", taskoperations.WorkWithTaskHandler(tr))
-	mux.HandleFunc("/api/tasks", taskoperations.WorkWithTasksHandler(db))
-	mux.HandleFunc("/api/task/done", taskoperations.TaskDoneHandler(tr))
+	mux.HandleFunc("/api/task", handlers.WorkWithTaskHandler(tr))
+	mux.HandleFunc("/api/tasks", handlers.WorkWithTasksHandler(tr))
+	mux.HandleFunc("/api/task/done", handlers.TaskDoneHandler(tr))
 
 	err = http.ListenAndServe(":7540", mux)
 	if err != nil {
