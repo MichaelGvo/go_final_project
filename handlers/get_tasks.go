@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
-	"go_final_project/task_repo"
 	"log"
 	"net/http"
 	"os"
+
+	"go_final_project/task_repo"
 )
 
 func init() {
@@ -14,7 +15,7 @@ func init() {
 	log.SetOutput(os.Stdout)
 }
 
-func WorkWithTasksHandler(tr *task_repo.TaskRepo) http.HandlerFunc {
+func Get_Tasks(tr *task_repo.TaskRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		var response []byte
 		var responseStatus int
@@ -28,7 +29,7 @@ func WorkWithTasksHandler(tr *task_repo.TaskRepo) http.HandlerFunc {
 		if id != "" {
 			taskSome, err := tr.GetTaskByID(id)
 			if err != nil {
-				if err.Error() == `{"error":"Задача не найдена"}` {
+				if err.Error() == "{\"error\":\"Задача не найдена\"}" {
 					log.Println("Ошибка: задача не найдена. хэндлер")
 					http.Error(w, err.Error(), http.StatusNotFound)
 					return
@@ -60,6 +61,11 @@ func WorkWithTasksHandler(tr *task_repo.TaskRepo) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(responseStatus)
-		w.Write(response)
+		_, err := w.Write(response)
+		if err != nil {
+			log.Printf("Ошибка при записи ответа: %v", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }

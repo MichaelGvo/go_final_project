@@ -3,12 +3,13 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
-	"go_final_project/nextdate"
-	"go_final_project/task_repo"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"go_final_project/nextdate"
+	"go_final_project/task_repo"
 )
 
 func init() {
@@ -19,7 +20,7 @@ func init() {
 
 var ResponseStatus int
 
-func TaskDoneHandler(db *task_repo.TaskRepo) http.HandlerFunc {
+func Task_Done(db *task_repo.TaskRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		id := req.URL.Query().Get("id")
 		if id == "" {
@@ -43,7 +44,6 @@ func TaskDoneHandler(db *task_repo.TaskRepo) http.HandlerFunc {
 		}
 
 		if taskDone.Repeat == "" {
-			//_, ResponseStatus, err := db.DeleteTask(id)
 			err := db.DeleteTask(id)
 			if err != nil {
 				log.Printf("Ошибка удаления задачи: %v", err)
@@ -58,7 +58,7 @@ func TaskDoneHandler(db *task_repo.TaskRepo) http.HandlerFunc {
 			return
 		} else {
 			now := time.Now()
-			nextDateInStr, err := nextdate.NextDate(now, taskDone.Date, taskDone.Repeat)
+			nextDateInStr, err := nextdate.Next_Date(now, taskDone.Date, taskDone.Repeat)
 			if err != nil {
 				log.Printf("Ошибка при получении следующей даты: %v", err)
 				http.Error(w, "{\"error\":\"Ошибка при получении следующей даты: "+err.Error()+"\"}", http.StatusBadRequest)
@@ -74,24 +74,6 @@ func TaskDoneHandler(db *task_repo.TaskRepo) http.HandlerFunc {
 
 			taskDone.Date = nextDate.Format("20060102")
 
-			//			taskJson, err := json.Marshal(taskDone)
-			//			if err != nil {
-			//				log.Printf("Ошибка преобразования задачи: %v", err)
-			//				http.Error(w, "{\"error\":\"Ошибка преобразования задачи: "+err.Error()+"\"}", http.StatusInternalServerError)
-			//				return
-			//			}
-			//			newRequest, err := http.NewRequest(http.MethodPut, "", bytes.NewBuffer(taskJson))
-			//			if err != nil {
-			//				log.Printf("Ошибка при создании нового запроса: %v", err)
-			//				http.Error(w, "{\"error\":\"Ошибка при создании нового запроса: "+err.Error()+"\"}", http.StatusInternalServerError)
-			//				return
-			//			}
-			//			newRequest.Header.Set("Content-Type", "application/json")
-			//
-			//			q := newRequest.URL.Query()
-			//			q.Add("id", id)
-			//			newRequest.URL.RawQuery = q.Encode()
-			//			_, ResponseStatus, err = db.UpdateTask(newRequest)
 			err = db.UpdateTask(taskDone)
 			if err != nil {
 				log.Printf("Ошибка при обновлении задачи: %v", err)

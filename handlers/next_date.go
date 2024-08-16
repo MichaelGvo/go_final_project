@@ -1,13 +1,14 @@
 package handlers
 
 import (
-	"go_final_project/nextdate"
 	"log"
 	"net/http"
 	"time"
+
+	"go_final_project/nextdate"
 )
 
-func NextDateHandler(w http.ResponseWriter, r *http.Request) {
+func Next_Date(w http.ResponseWriter, r *http.Request) {
 	nowInString := r.URL.Query().Get("now")
 	date := r.URL.Query().Get("date")
 	repeat := r.URL.Query().Get("repeat")
@@ -17,7 +18,7 @@ func NextDateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nextDate, err := nextdate.NextDate(now, date, repeat)
+	nextDate, err := nextdate.Next_Date(now, date, repeat)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

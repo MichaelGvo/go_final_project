@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func NextDate(now time.Time, date string, repeat string) (string, error) {
+func Next_Date(now time.Time, date string, repeat string) (string, error) {
 	if repeat == "" {
 		return "", errors.New("null in repeat")
 	}

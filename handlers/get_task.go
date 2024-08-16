@@ -5,12 +5,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"go_final_project/nextdate"
-	"go_final_project/task_repo"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"go_final_project/nextdate"
+	"go_final_project/task_repo"
 )
 
 func init() {
@@ -27,7 +28,9 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-func WorkWithTaskHandler(db *task_repo.TaskRepo) http.HandlerFunc {
+const dateFormat = "20060102"
+
+func Get_Task(db *task_repo.TaskRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		switch req.Method {
 		case http.MethodGet:
@@ -144,30 +147,30 @@ func Check(req *http.Request) (task_repo.Task, int, error) {
 	now = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
 
 	if task.Date == "" {
-		task.Date = now.Format("20060102")
+		task.Date = now.Format(dateFormat)
 	}
 
-	dateParse, err := time.Parse("20060102", task.Date)
+	dateParse, err := time.Parse(dateFormat, task.Date)
 	if err != nil {
 		log.Printf("Ошибка при преобразовании даты: %v", err)
 		return task, http.StatusBadRequest, errors.New(`{"error":"incorrect date"}`)
 	}
 	var dateNew string
 	if task.Repeat != "" {
-		dateNew, err = nextdate.NextDate(now, task.Date, task.Repeat)
+		dateNew, err = nextdate.Next_Date(now, task.Date, task.Repeat)
 		if err != nil {
 			log.Printf("Ошибка при получении следующей даты: %v", err)
 			return task, http.StatusBadRequest, err
 		}
 	}
 
-	if task.Date == now.Format("20060102") {
-		task.Date = now.Format("20060102")
+	if task.Date == now.Format(dateFormat) {
+		task.Date = now.Format(dateFormat)
 	}
 
 	if dateParse.Before(now) {
 		if task.Repeat == "" {
-			task.Date = now.Format("20060102")
+			task.Date = now.Format(dateFormat)
 		} else {
 			task.Date = dateNew
 		}
